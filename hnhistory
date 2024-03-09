@@ -1,0 +1,70 @@
+#!/usr/bin/env python3
+from datetime import datetime
+from bismuthclient.bismuthclient import BismuthClient
+client = BismuthClient(wallet_file='wallet.der')
+default_wallet_address = []
+
+n_of_tx_to_look = 30
+too_many_tx_addresses = []
+
+def to_localtime(stamp_time):
+    # print(stamp_time)
+    t = datetime.utcfromtimestamp(stamp_time)
+    return(t.strftime('%Y-%m-%d %H:%M'))
+
+
+def tx_history(addr):
+    transactions = client.command("addlistlim", [addr, 5])
+    for tx in transactions:
+        # print(tx)
+        time = to_localtime(tx[1])
+        print("block:{}, utc:{}, from:{}, to:{}, amount:{}".format(
+            tx[0], time, tx[2], tx[3], tx[4]))
+
+
+def register_history(addr):
+    try:
+        if addr in too_many_tx_addresses:
+            n_of_tx_to_look = 120
+        else:
+            n_of_tx_to_look = 30
+        #print(n_of_tx_to_look)
+        transactions = client.command("addlistlim", [addr, n_of_tx_to_look])
+        print("Print txs")
+        for tx in transactions:
+            time = to_localtime(tx[1])
+            # print(tx)
+            if tx[4] < 0.001:
+                print("block:{}, utc:{}, from:{}, to:{}, amount:{}, operation:{}, field:{}".format(
+                    tx[0], time, tx[2], tx[3], tx[4], tx[10], tx[11]))
+    except Exception as e:
+        print(e)
+
+
+def main():
+    wallet_address = input("Wallet Address: ")
+    if not wallet_address:
+        wallet_address = default_wallet_address
+        if client.address:
+            wallet_address = wallet_address + [client.address]
+    else:
+        wallet_address = [x.strip() for x in str(wallet_address).split(',')]
+        if len(wallet_address) < 2:
+            for addr in wallet_address:
+                wallet_address = [x.strip() for x in str(addr).split(' ')]
+        if client.address:
+            wallet_address = wallet_address + [client.address]
+    for address in wallet_address:
+        print("")
+        print(f"Looking up address {address} ...")
+        #balance = client.command("balanceget", [address])
+        #balance = balance[0]
+        # if balance == '0E-8':
+        #    balance = 0.000
+        # print(f"Your current balance is {balance}")
+        register_history(address)
+        # tx_history(address)
+
+
+if __name__ == '__main__':
+    main()
