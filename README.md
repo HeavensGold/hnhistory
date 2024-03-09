@@ -1,3 +1,3 @@
 # hnhistory
-hypernode register/unregister lookup too.
+hypernode register/unregister lookup tool.
 
